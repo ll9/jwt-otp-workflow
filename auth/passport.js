@@ -1,11 +1,14 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
-const JwtStrategy = require('passport-jwt').Strategy;
-const ExtractJwt = require('passport-jwt').ExtractJwt;
-const {
-  JWT_SECRET
-} = require('../routes/auth');
+var JwtStrategy = require('passport-jwt').Strategy,
+    ExtractJwt = require('passport-jwt').ExtractJwt;
+const opts = {}
+const JWT_SECRET = 'Eo_taLwPB4YAIkrh_nkKKPYewFGu37oQIlxypikjnovEHV_QMkdpnH5goTTnSTzqez87o3mM76ErvuQshxsPmdAVYocPovQAxRplA9TFSHQf_4gBvvwUe7FbVevBu8WObwRmr073kd2bu7NJX0fAOwDc9V1XceVYExsCIBxtn1CyVyTcSPpsb3k2Dgnap0wP77BRDJcPhSvFaHiitO6dtoOPJZyZDSvcQ_tTcegsnVBfoW9H5FC-nN9cAFaqvhV1D8VItS75sj-WcfRTpOyLxk5KVERfYNaXrTcLuTtfJZlylhNS7GXBKdz0w75R3BxPqTrZ52Fh9J6NvrxbZavDUA';
+opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+opts.secretOrKey = JWT_SECRET;
+opts.passReqToCallback = true;
+
 
 /**
  * @typedef {import('../routes/auth').User} User
@@ -75,9 +78,9 @@ passport.use('login', new LocalStrategy(strategyOptions,
   }
 ));
 
-passport.use(new JwtStrategy({secretOrKey: JWT_SECRET, passReqToCallback}, function(req, jwt_payload, done) {
+passport.use(new JwtStrategy(opts, function(req, jwt_payload, done) {
   let res = req.res;
-  let user = users.find(u => u.id === jwt_payload.sub);
+  let user = users.find(u => u.id === Number(jwt_payload.sub));
 
   if (user === undefined) {
     return res.status(401).send("Wrong password or Email").end(); 

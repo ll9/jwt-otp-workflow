@@ -59,9 +59,11 @@ router
         jwts.push(token);
 
         res.send(token.value);
-    });
+    })
+    .get('/endpoint', passport.authenticate('jwt', {session: false}), (req, res) => {
+        res.json(req.user);
+    })
 
 module.exports = {
     router,
-    JWT_SECRET
 }
