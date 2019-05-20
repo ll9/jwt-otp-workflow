@@ -2,14 +2,16 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
 var JwtStrategy = require('passport-jwt').Strategy,
-    ExtractJwt = require('passport-jwt').ExtractJwt;
-const opts = {}
+  ExtractJwt = require('passport-jwt').ExtractJwt;
 const {
   JWT_SECRET
-} = require('../config/config');opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-opts.secretOrKey = JWT_SECRET;
-opts.passReqToCallback = true;
-
+} = require('../config/config');
+const opts = {
+  secretOrKey: JWT_SECRET,
+  passReqToCallback: true,
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+};
+const UserRepository = new (require('../repositories/UserRepository'))();
 
 /**
  * @typedef {import('../routes/auth').User} User
@@ -17,14 +19,6 @@ opts.passReqToCallback = true;
 
 /** @type {User[]} */
 let users = [];
-
-function genId(user) {
-  if (users.length === 0) {
-    return 1;
-  }
-
-  return Math.max(users.map(u => u.id)) + 1;
-}
 
 const strategyOptions = {
   passwordField: 'password',
@@ -42,7 +36,7 @@ passport.use('register', new LocalStrategy(strategyOptions,
       return res.status(401).send('passwords do not match');
     } else if (user.password.length < 8) {
       return res.status(401).send('Passwort too short (at least 8 characters)');
-    } else if (users.find(u => u.email === username)) {
+    } else if (UserRepository.getByEmail(username)) {
       return res.status(401).send('Username already taken').end();
     }
 
@@ -50,9 +44,8 @@ passport.use('register', new LocalStrategy(strategyOptions,
     const hash = await bcrypt.hash(password, salt);
 
     user.password = hash;
-    user.id = genId();
 
-    users.push(user);
+    UserRepository.add(user);
 
     done(null, user);
   }
@@ -63,7 +56,7 @@ passport.use('login', new LocalStrategy(strategyOptions,
   async function (req, username, password, done) {
     /** @type {User} */
     let res = req.res;
-    let user = users.find(u => u.email === username);
+    let user = UserRepository.getByEmail(username);
 
     if (user === undefined) {
       return res.status(401).send('Cannot find user with name "' + req.body.email + '"').end();
@@ -79,12 +72,12 @@ passport.use('login', new LocalStrategy(strategyOptions,
   }
 ));
 
-passport.use(new JwtStrategy(opts, function(req, jwt_payload, done) {
+passport.use(new JwtStrategy(opts, function (req, jwt_payload, done) {
   let res = req.res;
-  let user = users.find(u => u.id === Number(jwt_payload.sub));
+  let user = UserRepository.get(Number(jwt_payload.sub));
 
   if (user === undefined) {
-    return res.status(401).send("Wrong password or Email").end(); 
+    return res.status(401).send("Wrong password or Email").end();
   }
 
   return done(null, user);
