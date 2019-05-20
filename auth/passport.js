@@ -1,5 +1,6 @@
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcrypt');
 
 passport.use('register', new LocalStrategy({
     passwordField: 'password',
@@ -7,11 +8,15 @@ passport.use('register', new LocalStrategy({
     passReqToCallback: true
   },
 
-  function (req, username, password, done) {
+  async function (req, username, password, done) {
+    const salt = await bcrypt.genSalt();
+    const hash = await bcrypt.hash(password, salt);
+
     console.log(username);
     console.log(password);
+    req.body.password = hash;
 
-    done(null, username);
+    done(null, req.body);
 
     // User.findOne({
     //   username: username
