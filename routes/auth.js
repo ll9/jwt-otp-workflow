@@ -14,14 +14,27 @@ const JWT_SECRET = 'Eo_taLwPB4YAIkrh_nkKKPYewFGu37oQIlxypikjnovEHV_QMkdpnH5goTTn
  */
 
 router
-    .post('/register', passport.authenticate('register', {session: false}), (req, res) => {
+    .post('/register', passport.authenticate('register', {
+        session: false
+    }), (req, res) => {
         /** @type {User} */
         let user = req.user;
-        let token = jwt.sign({}, JWT_SECRET, {jwtid: 'guid', subject: user.id.toString()});
+        let token = jwt.sign({}, JWT_SECRET, {
+            jwtid: 'guid',
+            subject: user.id.toString()
+        });
         res.send(token);
     })
-    .post('/login', (req, res) => {
-        res.send('Not implemented');
+    .post('/login', passport.authenticate('login', {
+        session: false
+    }), (req, res) => {
+        /** @type {User} */
+        let user = req.user;
+        let token = jwt.sign({}, JWT_SECRET, {
+            jwtid: 'guid',
+            subject: user.id.toString()
+        });
+        res.send(token);
     });
 
 module.exports = router;

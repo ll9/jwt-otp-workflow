@@ -17,11 +17,13 @@ const bcrypt = require('bcrypt');
    return Math.max(users.map(u => u.id)) + 1;
  }
 
-passport.use('register', new LocalStrategy({
-    passwordField: 'password',
-    usernameField: 'email',
-    passReqToCallback: true
-  },
+const strategyOptions = {
+  passwordField: 'password',
+  usernameField: 'email',
+  passReqToCallback: true
+};
+
+passport.use('register', new LocalStrategy(strategyOptions,
 
   async function (req, username, password, done) {
     /** @type {User} */
@@ -30,21 +32,42 @@ passport.use('register', new LocalStrategy({
     if (user.password !== user.passwordConfirm) {
       return res.status(401).send('passwords do not match');
     }
-    if (user.password.length < 8) {
+    else if (user.password.length < 8) {
       return res.status(401).send('Passwort too short (at least 8 characters)');
     }
-    if (users.find(u => u.email === username)) {
+    else if (users.find(u => u.email === username)) {
       return res.status(401).send('Username already taken').end();
     }
 
     const salt = await bcrypt.genSalt();
     const hash = await bcrypt.hash(password, salt);
 
-    req.body.password = hash;
-    req.body.id = genId();
+    user.password = hash;
+    user.id = genId();
 
-    users.push(req.body);
+    users.push(user);
 
-    done(null, req.body);
+    done(null, user);
+  }
+));
+
+passport.use('login', new LocalStrategy(strategyOptions,
+
+  async function (req, username, password, done) {
+    /** @type {User} */
+    let res = req.res;
+    let user = users.find(u => u.email === username);
+
+    if (user === undefined) {
+      return res.status(401).send('Cannot find user with name "' + req.body.email + '"').end();
+    }
+    
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match) {
+      return res.status(401).send("Wrong password or Email").end();
+    }
+
+    done(null, user);
   }
 ));
