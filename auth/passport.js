@@ -6,6 +6,9 @@ const bcrypt = require('bcrypt');
  * @typedef {import('../routes/auth').User} User
  */
 
+ /** @type {User[]} */
+ let users = [];
+
 passport.use('register', new LocalStrategy({
     passwordField: 'password',
     usernameField: 'email',
@@ -16,7 +19,10 @@ passport.use('register', new LocalStrategy({
     /** @type {User} */
     let user = req.body;
     if (user.password !== user.passwordConfirm) {
-      req.res.send(401, 'passwords do not match');
+      return req.res.send(401, 'passwords do not match');
+    }
+    if (users.find(u => u.email === username)) {
+      return req.res.status(401).send('Username already taken').end();
     }
 
     const salt = await bcrypt.genSalt();
@@ -25,6 +31,9 @@ passport.use('register', new LocalStrategy({
     console.log(username);
     console.log(password);
     req.body.password = hash;
+    req.body.id = 1;
+
+    users.push(req.body);
 
     done(null, req.body);
 
