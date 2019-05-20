@@ -2,6 +2,10 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
 
+/**
+ * @typedef {import('../routes/auth').User} User
+ */
+
 passport.use('register', new LocalStrategy({
     passwordField: 'password',
     usernameField: 'email',
@@ -9,6 +13,12 @@ passport.use('register', new LocalStrategy({
   },
 
   async function (req, username, password, done) {
+    /** @type {User} */
+    let user = req.body;
+    if (user.password !== user.passwordConfirm) {
+      req.res.send(401, 'passwords do not match');
+    }
+
     const salt = await bcrypt.genSalt();
     const hash = await bcrypt.hash(password, salt);
 
