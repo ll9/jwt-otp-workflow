@@ -19,6 +19,13 @@ function generatePassword() {
 
 let instance = null;
 
+
+/**
+ * TODO:
+ * consume otp (delete on consumption)
+ * check if otp expires
+ * generate jwt on consumption
+ */
 class OneTimePasswordRepositorySingleton {
     constructor() {
         if (instance) {
