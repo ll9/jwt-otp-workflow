@@ -9,6 +9,14 @@ const bcrypt = require('bcrypt');
  /** @type {User[]} */
  let users = [];
 
+ function genId(user) {
+   if (users.length === 0) {
+     return 1;
+   }
+
+   return Math.max(users.map(u => u.id)) + 1;
+ }
+
 passport.use('register', new LocalStrategy({
     passwordField: 'password',
     usernameField: 'email',
@@ -17,39 +25,26 @@ passport.use('register', new LocalStrategy({
 
   async function (req, username, password, done) {
     /** @type {User} */
+    let res = req.res;
     let user = req.body;
     if (user.password !== user.passwordConfirm) {
-      return req.res.send(401, 'passwords do not match');
+      return res.status(401).send('passwords do not match');
+    }
+    if (user.password.length < 8) {
+      return res.status(401).send('Passwort too short (at least 8 characters)');
     }
     if (users.find(u => u.email === username)) {
-      return req.res.status(401).send('Username already taken').end();
+      return res.status(401).send('Username already taken').end();
     }
 
     const salt = await bcrypt.genSalt();
     const hash = await bcrypt.hash(password, salt);
 
-    console.log(username);
-    console.log(password);
     req.body.password = hash;
-    req.body.id = 1;
+    req.body.id = genId();
 
     users.push(req.body);
 
     done(null, req.body);
-
-    // User.findOne({
-    //   username: username
-    // }, function (err, user) {
-    //   if (err) {
-    //     return done(err);
-    //   }
-    //   if (!user) {
-    //     return done(null, false);
-    //   }
-    //   if (!user.verifyPassword(password)) {
-    //     return done(null, false);
-    //   }
-    //   return done(null, user);
-    // });
   }
 ));
