@@ -2,19 +2,28 @@
  * @typedef {import('../routes/auth').User} User
  */
 
-class UserRepository {
+let instance = null;
+
+class UserRepositorySingleton {
+
     constructor() {
+        if (instance) {
+            return instance;
+        }
+
         /** @type {User[]} */
         this.users = []
+        instance = this;
+        return instance;
     }
 
     genId() {
         if (this.users.length === 0) {
-          return 1;
+            return 1;
         }
-      
+
         return Math.max(this.users.map(u => u.id)) + 1;
-      }
+    }
 
     get(id) {
         let user = this.users.find(u => u.id === id)
@@ -41,4 +50,4 @@ class UserRepository {
     }
 }
 
-module.exports = UserRepository;
+module.exports = UserRepositorySingleton;

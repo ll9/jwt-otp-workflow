@@ -11,7 +11,7 @@ const opts = {
   passReqToCallback: true,
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
 };
-const UserRepository = new (require('../repositories/UserRepository'))();
+const UserRepository = new (require('../repositories/UserRepositorySingleton'))();
 
 /**
  * @typedef {import('../routes/auth').User} User
