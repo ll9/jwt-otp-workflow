@@ -61,4 +61,7 @@ router
         res.send(token.value);
     });
 
-module.exports = router;
+module.exports = {
+    router,
+    JWT_SECRET
+}
